@@ -1,0 +1,58 @@
+const express = require("express")
+const request = require("request");
+const bodyParser = require("body-parser")
+const https = require("https");
+const app = express();
+app.use(bodyParser.urlencoded({ extended: true }));
+
+app.get("/", function(req, res) {
+    res.sendFile(__dirname + "/signup.html")
+})
+
+app.post("/", function(req, res) {
+    const firstName = req.body.first;
+    const lastName = req.body.last;
+    const email = req.body.email;
+
+    var data = {
+        members: [{
+            email_address: email,
+            status: "subscribed",
+            merge_fields: {
+                FNAME: firstName,
+                LNAME: lastName
+            }
+        }]
+    };
+
+    var jsonData = JSON.stringify(data);
+    const url = "https://us21.api.mailchimp.com/3.0/lists/ff2d94a88b";
+    const options = {
+        method: "POST",
+        auth: "yashmeet:8ef8ab8ab36e164a61dc658d4d8d636a-us212"
+    };
+    const request = https.request(url, options, function(response) {
+
+        if (response.statusCode === 200)
+            res.sendFile(__dirname + "/success.html");
+        else
+            res.sendFile(__dirname + "/failure.html");
+        response.on("data", function(data) {
+            console.log(JSON.parse(data));
+        })
+    });
+
+    request.write(jsonData);
+    request.end();
+})
+
+app.post("/failure", function(req, res) {
+    res.redirect("/");
+})
+
+app.listen(process.env.PORT || 3000, function() {
+    console.log("Server Started on Port 3000");
+})
+
+//Api key - 8ef8ab8ab36e164a61dc658d4d8d636a-us21
+//list id - ff2d94a88b
